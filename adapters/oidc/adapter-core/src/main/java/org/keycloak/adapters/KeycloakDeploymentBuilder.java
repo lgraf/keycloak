@@ -138,8 +138,13 @@ public class KeycloakDeploymentBuilder {
         if (adapterConfig.getAuthServerUrl() == null && (!deployment.isBearerOnly() || realmKeyPem == null)) {
             throw new RuntimeException("You must specify auth-server-url");
         }
-        deployment.setAuthServerBaseUrl(adapterConfig);
-        deployment.setAuthServerBackChannelBaseUrl(adapterConfig);
+
+        if(adapterConfig.getAuthServerBackChannelUrl() == null) {
+            deployment.setAuthServerBaseUrl(adapterConfig.getAuthServerUrl());
+        }
+        else {
+            deployment.setAuthServerBaseUrls(adapterConfig.getAuthServerUrl(), adapterConfig.getAuthServerBackChannelUrl());
+        }
 
         if (adapterConfig.getTurnOffChangeSessionIdOnLogin() != null) {
             deployment.setTurnOffChangeSessionIdOnLogin(adapterConfig.getTurnOffChangeSessionIdOnLogin());

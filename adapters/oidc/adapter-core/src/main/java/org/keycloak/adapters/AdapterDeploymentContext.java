@@ -100,14 +100,18 @@ public class AdapterDeploymentContext {
     }
 
     protected KeycloakDeployment resolveUrls(KeycloakDeployment deployment, HttpFacade facade) {
-        if (deployment.relativeUrls == RelativeUrlsUsed.NEVER) {
+        if (deployment.getRelativeUrls() == RelativeUrlsUsed.NEVER) {
             // Absolute URI are already set to everything
             return deployment;
         } else {
-            DeploymentDelegate delegate = new DeploymentDelegate(this.deployment);
-            delegate.setAuthServerBaseUrl(getBaseBuilder(facade, this.deployment.getAuthServerBaseUrl()).build().toString());
-            if(this.deployment.getAuthServerBackChannelBaseUrl() != null)
-                delegate.setAuthServerBackChannelBaseUrl(this.deployment.getAuthServerBackChannelBaseUrl());
+            DeploymentDelegate delegate = new DeploymentDelegate(deployment);
+            String requestAuthServerBaseUrl = getBaseBuilder(facade, deployment.getAuthServerBaseUrl()).build().toString();
+            if(deployment.getAuthServerBackChannelBaseUrl() == null) {
+                delegate.setAuthServerBaseUrl(requestAuthServerBaseUrl);
+            }
+            else {
+                delegate.setAuthServerBaseUrls(requestAuthServerBaseUrl, deployment.getAuthServerBackChannelBaseUrl());
+            }
             return delegate;
         }
     }
@@ -124,55 +128,9 @@ public class AdapterDeploymentContext {
             this.delegate = delegate;
         }
 
-        public void setAuthServerBaseUrl(String authServerBaseUrl) {
-            this.authServerBaseUrl = authServerBaseUrl;
-            KeycloakUriBuilder serverBuilder = KeycloakUriBuilder.fromUri(authServerBaseUrl);
-            resolveUrls(serverBuilder);
-        }
-
-        protected void setAuthServerBackChannelBaseUrl(String authServerBackChannelBaseUrl) {
-            this.authServerBackChannelBaseUrl = authServerBackChannelBaseUrl;
-            resolveBackChannelUrls(KeycloakUriBuilder.fromUri(authServerBackChannelBaseUrl));
-        }
-
         @Override
         public RelativeUrlsUsed getRelativeUrls() {
             return delegate.getRelativeUrls();
-        }
-
-        @Override
-        public String getRealmInfoUrl() {
-            return (this.realmInfoUrl != null) ? this.realmInfoUrl : delegate.getRealmInfoUrl();
-        }
-
-        @Override
-        public String getTokenUrl() {
-            return (this.tokenUrl != null) ? this.tokenUrl : delegate.getTokenUrl();
-        }
-
-        @Override
-        public KeycloakUriBuilder getLogoutUrl() {
-            return (this.logoutUrl != null) ? this.logoutUrl : delegate.getLogoutUrl();
-        }
-
-        @Override
-        public String getAccountUrl() {
-            return (this.accountUrl != null) ? this.accountUrl : delegate.getAccountUrl();
-        }
-
-        @Override
-        public String getRegisterNodeUrl() {
-            return (this.registerNodeUrl != null) ? this.registerNodeUrl : delegate.getRegisterNodeUrl();
-        }
-
-        @Override
-        public String getUnregisterNodeUrl() {
-            return (this.unregisterNodeUrl != null) ? this.unregisterNodeUrl : delegate.getUnregisterNodeUrl();
-        }
-
-        @Override
-        public String getJwksUrl() {
-            return (this.jwksUrl != null) ? this.jwksUrl : delegate.getJwksUrl();
         }
 
         @Override

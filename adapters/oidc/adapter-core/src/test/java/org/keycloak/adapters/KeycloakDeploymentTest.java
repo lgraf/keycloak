@@ -22,6 +22,7 @@ import org.keycloak.representations.adapters.config.AdapterConfig;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertNull;
 
 /**
  * @author <a href="mailto:brad.culley@spartasystems.com">Brad Culley</a>
@@ -63,6 +64,29 @@ public class KeycloakDeploymentTest {
         keycloakDeployment.setAuthServerBaseUrl(config);
 
         assertEquals("https://localhost/auth", keycloakDeployment.getAuthServerBaseUrl());
+
+
+        keycloakDeployment.setAuthServerBaseUrls("http://frontchannel:80/auth","http://backchannel:80/auth");
+        assertEquals("http://frontchannel/auth", keycloakDeployment.getAuthServerBaseUrl());
+        assertEquals("http://backchannel/auth", keycloakDeployment.getAuthServerBackChannelBaseUrl());
+
+        keycloakDeployment.setAuthServerBaseUrls("https://frontchannel:443/auth","https://backchannel:443/auth");
+        assertEquals("https://frontchannel/auth", keycloakDeployment.getAuthServerBaseUrl());
+        assertEquals("https://backchannel/auth", keycloakDeployment.getAuthServerBackChannelBaseUrl());
+    }
+
+    @Test
+    public void getAuthServerUrl_ShouldReturnNull_WhenNoAuthServerUrlsAreGiven() {
+        KeycloakDeployment keycloakDeployment = new KeycloakDeployment();
+        keycloakDeployment.setRealm("test");
+
+        AdapterConfig config = new AdapterConfig();
+        config.setAuthServerUrl(null);
+        config.setAuthServerBackChannelUrl(null);
+        keycloakDeployment.setAuthServerBaseUrl(config);
+
+        assertNull(keycloakDeployment.getAuthServerBaseUrl());
+        assertNull(keycloakDeployment.getAuthServerBackChannelBaseUrl());
     }
 
 }

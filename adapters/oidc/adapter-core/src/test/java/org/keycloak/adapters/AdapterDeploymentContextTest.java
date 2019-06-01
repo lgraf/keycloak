@@ -27,6 +27,7 @@ import java.io.InputStream;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 public class AdapterDeploymentContextTest {
 
@@ -45,6 +46,7 @@ public class AdapterDeploymentContextTest {
 
         String frontChannelUrl = host + "/auth";
         assertEquals(frontChannelUrl, resolvedDeployment.getAuthServerBaseUrl());
+
         assertFrontChannelUrls(resolvedDeployment, frontChannelUrl);
         assertBackChannelUrls(resolvedDeployment, frontChannelUrl);
     }
@@ -62,6 +64,8 @@ public class AdapterDeploymentContextTest {
 
         String frontChannelUrl = requestUri + "/auth";
         assertEquals(frontChannelUrl, resolvedDeployment.getAuthServerBaseUrl());
+        assertNull(resolvedDeployment.getAuthServerBackChannelBaseUrl());
+
         assertFrontChannelUrls(resolvedDeployment, frontChannelUrl);
         assertBackChannelUrls(resolvedDeployment, frontChannelUrl);
     }
@@ -74,8 +78,7 @@ public class AdapterDeploymentContextTest {
         relativeAuthServeUrlConfig.setAuthServerBackChannelUrl(backChannelUrl);
 
         KeycloakDeployment deployment = createDeployment();
-        deployment.setAuthServerBaseUrl(relativeAuthServeUrlConfig);
-        deployment.setAuthServerBackChannelBaseUrl(relativeAuthServeUrlConfig);
+        deployment.setAuthServerBaseUrls(relativeAuthServeUrlConfig.getAuthServerUrl(), relativeAuthServeUrlConfig.getAuthServerBackChannelUrl());
 
         AdapterDeploymentContext deploymentContext = new AdapterDeploymentContext(deployment);
         String requestUri = "https://test.app";
@@ -83,6 +86,8 @@ public class AdapterDeploymentContextTest {
 
         String frontChannelUrl = requestUri + "/auth";
         assertEquals(frontChannelUrl, resolvedDeployment.getAuthServerBaseUrl());
+        assertEquals(backChannelUrl, resolvedDeployment.getAuthServerBackChannelBaseUrl());
+
         assertFrontChannelUrls(resolvedDeployment, frontChannelUrl);
         assertBackChannelUrls(resolvedDeployment, backChannelUrl);
     }

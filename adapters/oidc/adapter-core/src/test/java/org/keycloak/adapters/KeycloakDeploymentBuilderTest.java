@@ -32,6 +32,7 @@ import org.keycloak.enums.TokenStore;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertNull;
 
 /**
  * @author <a href="mailto:sthorger@redhat.com">Stian Thorgersen</a>
@@ -109,6 +110,8 @@ public class KeycloakDeploymentBuilderTest {
         String frontChannelUrl = "https://test.frontchannel:8443/auth";
 
         assertEquals(frontChannelUrl, deployment.getAuthServerBaseUrl());
+        assertNull(deployment.getAuthServerBackChannelBaseUrl());
+
         assertFrontChannelUrls(deployment, frontChannelUrl);
         assertBackChannelUrls(deployment, frontChannelUrl);
     }

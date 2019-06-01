@@ -25,11 +25,9 @@ import org.keycloak.adapters.rotation.PublicKeyLocator;
 import org.keycloak.common.enums.RelativeUrlsUsed;
 import org.keycloak.common.enums.SslRequired;
 import org.keycloak.common.util.KeycloakUriBuilder;
-import org.keycloak.constants.ServiceUrlConstants;
 import org.keycloak.enums.TokenStore;
 import org.keycloak.representations.adapters.config.AdapterConfig;
 
-import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -44,19 +42,9 @@ public class KeycloakDeployment {
 
     private static final Logger log = Logger.getLogger(KeycloakDeployment.class);
 
-    protected RelativeUrlsUsed relativeUrls;
     protected String realm;
     protected PublicKeyLocator publicKeyLocator;
-    protected String authServerBaseUrl;
-    protected String authServerBackChannelBaseUrl;
-    protected String realmInfoUrl;
-    protected KeycloakUriBuilder authUrl;
-    protected String tokenUrl;
-    protected KeycloakUriBuilder logoutUrl;
-    protected String accountUrl;
-    protected String registerNodeUrl;
-    protected String unregisterNodeUrl;
-    protected String jwksUrl;
+    protected KeycloakUrls urls = KeycloakUrls.unresolved();
     protected String principalAttribute = "sub";
 
     protected String resourceName;
@@ -129,97 +117,74 @@ public class KeycloakDeployment {
     }
 
     public String getAuthServerBaseUrl() {
-        return authServerBaseUrl;
+        return urls.getFrontChannelBaseUrl();
     }
 
     public void setAuthServerBaseUrl(AdapterConfig config) {
-        this.authServerBaseUrl = config.getAuthServerUrl();
-        if (authServerBaseUrl == null) return;
+        setAuthServerBaseUrl(config.getAuthServerUrl());
+    }
 
-        URI authServerUri = URI.create(authServerBaseUrl);
+    public void setAuthServerBaseUrl(String authServerBaseUrl) {
+        this.urls = new KeycloakUrlResolver(getRealm())
+                .withFrontChannelUrl(authServerBaseUrl)
+                .resolve();
+    }
 
-        if (authServerUri.getHost() == null) {
-            relativeUrls = RelativeUrlsUsed.ALWAYS;
-        } else {
-            // We have absolute URI in config
-            relativeUrls = RelativeUrlsUsed.NEVER;
-            KeycloakUriBuilder serverBuilder = KeycloakUriBuilder.fromUri(authServerBaseUrl);
-            resolveUrls(serverBuilder);
-        }
+    public void setAuthServerBaseUrls(String authServerBaseUrl, String authServerBackChannelBaseUrl) {
+        urls = new KeycloakUrlResolver(getRealm())
+                .withFrontChannelUrl(authServerBaseUrl)
+                .withBackChannelUrl(authServerBackChannelBaseUrl)
+                .resolve();
     }
 
     public String getAuthServerBackChannelBaseUrl() {
-        return authServerBackChannelBaseUrl;
-    }
-
-    public void setAuthServerBackChannelBaseUrl(AdapterConfig config) {
-        this.authServerBackChannelBaseUrl = config.getAuthServerBackChannelUrl();
-        if (authServerBackChannelBaseUrl == null) return;
-
-        KeycloakUriBuilder serverBuilder = KeycloakUriBuilder.fromUri(authServerBackChannelBaseUrl);
-        resolveBackChannelUrls(serverBuilder);
+        return urls.getBackChannelBaseUrl();
     }
 
     /**
      * @param authUrlBuilder absolute URI
+     * @deprecated use {@link KeycloakDeployment#setAuthServerBaseUrl(String)} or {@link KeycloakDeployment#setAuthServerBaseUrls(String, String)} instead
      */
     protected void resolveUrls(KeycloakUriBuilder authUrlBuilder) {
-        if (log.isDebugEnabled()) {
-            log.debug("resolveUrls");
-        }
-
-        authServerBaseUrl = authUrlBuilder.build().toString();
-
-        String login = authUrlBuilder.clone().path(ServiceUrlConstants.AUTH_PATH).build(getRealm()).toString();
-        authUrl = KeycloakUriBuilder.fromUri(login);
-        realmInfoUrl = authUrlBuilder.clone().path(ServiceUrlConstants.REALM_INFO_PATH).build(getRealm()).toString();
-        accountUrl = authUrlBuilder.clone().path(ServiceUrlConstants.ACCOUNT_SERVICE_PATH).build(getRealm()).toString();
-
-        resolveBackChannelUrls(authUrlBuilder);
-    }
-
-    protected void resolveBackChannelUrls(KeycloakUriBuilder authUrlBuilder) {
-        tokenUrl = authUrlBuilder.clone().path(ServiceUrlConstants.TOKEN_PATH).build(getRealm()).toString();
-        logoutUrl = KeycloakUriBuilder.fromUri(authUrlBuilder.clone().path(ServiceUrlConstants.TOKEN_SERVICE_LOGOUT_PATH).build(getRealm()).toString());
-        registerNodeUrl = authUrlBuilder.clone().path(ServiceUrlConstants.CLIENTS_MANAGEMENT_REGISTER_NODE_PATH).build(getRealm()).toString();
-        unregisterNodeUrl = authUrlBuilder.clone().path(ServiceUrlConstants.CLIENTS_MANAGEMENT_UNREGISTER_NODE_PATH).build(getRealm()).toString();
-        jwksUrl = authUrlBuilder.clone().path(ServiceUrlConstants.JWKS_URL).build(getRealm()).toString();
+        urls = new KeycloakUrlResolver(getRealm())
+                .withFrontChannelUrl(authUrlBuilder.build().toString())
+                .resolve();
     }
 
     public RelativeUrlsUsed getRelativeUrls() {
-        return relativeUrls;
+        return urls.getRelativeUrls();
     }
 
     public String getRealmInfoUrl() {
-        return realmInfoUrl;
+        return urls.getRealmInfoUrl();
     }
 
     public KeycloakUriBuilder getAuthUrl() {
-        return authUrl;
+        return urls.getAuthUrl();
     }
 
     public String getTokenUrl() {
-        return tokenUrl;
+        return urls.getTokenUrl();
     }
 
     public KeycloakUriBuilder getLogoutUrl() {
-        return logoutUrl;
+        return urls.getLogoutUrl();
     }
 
     public String getAccountUrl() {
-        return accountUrl;
+        return urls.getAccountUrl();
     }
 
     public String getRegisterNodeUrl() {
-        return registerNodeUrl;
+        return urls.getRegisterNodeUrl();
     }
 
     public String getUnregisterNodeUrl() {
-        return unregisterNodeUrl;
+        return urls.getUnregisterNodeUrl();
     }
 
     public String getJwksUrl() {
-        return jwksUrl;
+        return urls.getJwksUrl();
     }
 
     public void setResourceName(String resourceName) {
