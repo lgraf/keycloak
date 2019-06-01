@@ -106,6 +106,8 @@ public class AdapterDeploymentContext {
         } else {
             DeploymentDelegate delegate = new DeploymentDelegate(this.deployment);
             delegate.setAuthServerBaseUrl(getBaseBuilder(facade, this.deployment.getAuthServerBaseUrl()).build().toString());
+            if(this.deployment.getAuthServerBackChannelBaseUrl() != null)
+                delegate.setAuthServerBackChannelBaseUrl(this.deployment.getAuthServerBackChannelBaseUrl());
             return delegate;
         }
     }
@@ -126,6 +128,11 @@ public class AdapterDeploymentContext {
             this.authServerBaseUrl = authServerBaseUrl;
             KeycloakUriBuilder serverBuilder = KeycloakUriBuilder.fromUri(authServerBaseUrl);
             resolveUrls(serverBuilder);
+        }
+
+        protected void setAuthServerBackChannelBaseUrl(String authServerBackChannelBaseUrl) {
+            this.authServerBackChannelBaseUrl = authServerBackChannelBaseUrl;
+            resolveBackChannelUrls(KeycloakUriBuilder.fromUri(authServerBackChannelBaseUrl));
         }
 
         @Override

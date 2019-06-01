@@ -101,4 +101,42 @@ public class KeycloakDeploymentBuilderTest {
         KeycloakDeployment deployment = KeycloakDeploymentBuilder.build(getClass().getResourceAsStream("/keycloak-secret-jwt.json"));
         assertEquals(JWTClientSecretCredentialsProvider.PROVIDER_ID, deployment.getClientAuthenticator().getId());
     }
+
+    @Test
+    public void build_ShouldResolveAllUrlsToFrontChannel_WhenNoBackChannelUrlIsGiven() {
+        KeycloakDeployment deployment = KeycloakDeploymentBuilder.build(getClass().getResourceAsStream("/keycloak-frontchannel-url-only.json"));
+
+        String frontChannelUrl = "https://test.frontchannel:8443/auth";
+
+        assertEquals(frontChannelUrl, deployment.getAuthServerBaseUrl());
+        assertFrontChannelUrls(deployment, frontChannelUrl);
+        assertBackChannelUrls(deployment, frontChannelUrl);
+    }
+
+    @Test
+    public void build_ShouldResolveBackChannelUrlsToBackchannel_WhenBackChannelUrlIsGiven() {
+        KeycloakDeployment deployment = KeycloakDeploymentBuilder.build(getClass().getResourceAsStream("/keycloak-backchannel-url.json"));
+
+        String frontChannelUrl = "https://test.frontchannel:8443/auth";
+        assertEquals(frontChannelUrl, deployment.getAuthServerBaseUrl());
+        assertFrontChannelUrls(deployment, frontChannelUrl);
+
+        String backChannelUrl = "https://test.backchannel:8443/auth";
+        assertEquals(backChannelUrl, deployment.getAuthServerBackChannelBaseUrl());
+        assertBackChannelUrls(deployment, backChannelUrl);
+    }
+
+    private void assertFrontChannelUrls(KeycloakDeployment deployment, String url) {
+        assertEquals(url + "/realms/test", deployment.getRealmInfoUrl());
+        assertEquals(url + "/realms/test/protocol/openid-connect/auth", deployment.getAuthUrl().build().toString());
+        assertEquals(url + "/realms/test/account", deployment.getAccountUrl());
+    }
+
+    private void assertBackChannelUrls(KeycloakDeployment deployment, String url) {
+        assertEquals(url + "/realms/test/protocol/openid-connect/token", deployment.getTokenUrl());
+        assertEquals(url + "/realms/test/protocol/openid-connect/logout", deployment.getLogoutUrl().build().toString());
+        assertEquals(url + "/realms/test/protocol/openid-connect/certs", deployment.getJwksUrl());
+        assertEquals(url + "/realms/test/clients-managements/register-node", deployment.getRegisterNodeUrl());
+        assertEquals(url + "/realms/test/clients-managements/unregister-node", deployment.getUnregisterNodeUrl());
+    }
 }
